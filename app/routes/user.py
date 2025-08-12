@@ -3,15 +3,18 @@ from config.db import db
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 
-user_bp = Blueprint('user',__name__,url_prefix='/users')
+user_bp = Blueprint('user', __name__, url_prefix='/users')
 
-@user_bp.route('/',methods=['GET'])
+# Get all users
+@user_bp.route('/', methods=['GET'])
 def get_users():
     users = list(db.crochet_user.find())
     for user in users:
         user['_id'] = str(user['_id'])
     return jsonify(users)
 
+# Signup user
+@user_bp.route('/signup', methods=['POST'])
 def signup_user():
     data = request.json
     hashed_password = generate_password_hash(data['password'])
