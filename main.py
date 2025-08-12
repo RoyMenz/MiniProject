@@ -1,12 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask
 from config.db import db
-from bson import ObjectId
+from routes.user import user_bp  # Import the blueprint
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return {'message' : 'API is Running !!'}
+    return {'message': 'API is Running !!'}
+
+# Register the user blueprint
+app.register_blueprint(user_bp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5000,debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
