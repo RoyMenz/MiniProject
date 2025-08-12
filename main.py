@@ -1,6 +1,6 @@
 from flask import Flask
 from config.db import db
-from routes.user import user_bp  # Import the blueprint
+from app.routes.user import user_bp  # Import the blueprint
 
 app = Flask(__name__)
 
@@ -12,4 +12,4 @@ def home():
 app.register_blueprint(user_bp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
