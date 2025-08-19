@@ -1,4 +1,6 @@
 Flask==3.0.3
-flask-pymongo==2.3.0
+Flask-Cors==4.0.1
+pymongo==4.8.0
+dnspython==2.6.1
 PyJWT==2.9.0
 Werkzeug==3.0.3
