@@ -1,63 +1,45 @@
 from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
 from config.db import db
+from werkzeug.security import generate_password_hash
+from bson import ObjectId
 
-user_bp = Blueprint("user", __name__, url_prefix="/users")
+user_bp = Blueprint('user', __name__, url_prefix='/users')
 
-# --- SIGNUP ---
-@user_bp.route("/signup", methods=["POST"])
+@user_bp.route('/signup', methods=['POST'])
 def signup():
-    data = request.get_json()
+    try:
+        data = request.get_json()
 
-    if not data or "email" not in data or "password" not in data:
-        return jsonify({"error": "Email and password are required"}), 400
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
 
-    email = data["email"]
-    password = data["password"]
+        username = data.get("username") or data.get("name")  # accepts both
+        email = data.get("email")
+        password = data.get("password")
 
-    # Check if user already exists
-    existing_user = db.crochet_user.find_one({"email": email})
-    if existing_user:
-        return jsonify({"error": "User already exists"}), 400
+        if not username or not email or not password:
+            return jsonify({"error": "Missing required fields"}), 400
 
-    hashed_pw = generate_password_hash(password)
+        # Check if email already exists
+        existing_user = db.crochet_user.find_one({"email": email})
+        if existing_user:
+            return jsonify({"error": "User already exists"}), 400
 
-    user = {
-        "email": email,
-        "password": hashed_pw
-    }
+        # Hash password
+        hashed_pw = generate_password_hash(password)
 
-    db.crochet_user.insert_one(user)
+        # Insert into MongoDB
+        new_user = {
+            "username": username,
+            "email": email,
+            "password": hashed_pw
+        }
+        result = db.crochet_user.insert_one(new_user)
 
-    return jsonify({"message": "User created successfully"}), 201
+        return jsonify({
+            "message": "User created successfully",
+            "user_id": str(result.inserted_id)
+        }), 201
 
-
-# --- LOGIN ---
-@user_bp.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-
-    if not data or "email" not in data or "password" not in data:
-        return jsonify({"error": "Email and password are required"}), 400
-
-    email = data["email"]
-    password = data["password"]
-
-    user = db.crochet_user.find_one({"email": email})
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if not check_password_hash(user["password"], password):
-        return jsonify({"error": "Invalid password"}), 401
-
-    return jsonify({"message": "Login successful", "email": email}), 200
-
-
-# --- TEST GET USERS ---
-@user_bp.route("/", methods=["GET"])
-def get_users():
-    users = list(db.crochet_user.find({}, {"password": 0}))  # hide password
-    for user in users:
-        user["_id"] = str(user["_id"])
-    return jsonify(users)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
